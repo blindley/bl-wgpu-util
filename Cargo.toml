@@ -1,0 +1,9 @@
+[package]
+name = "bl-wgpu-util"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+bytemuck = { version = "1.25.0", features = ["derive"] }
+wgpu = "29.0"
