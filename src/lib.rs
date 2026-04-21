@@ -1,6 +1,7 @@
 pub use wgpu;
 
+pub mod image;
 pub mod renderers;
-mod viewport;
+pub mod viewport;
 
 pub use viewport::Viewport;
