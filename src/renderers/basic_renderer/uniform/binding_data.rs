@@ -56,6 +56,18 @@ impl UniformBindingData {
         staging.write(uniform).unwrap();
         queue.write_buffer(&self.buffer, 0, staging.into_inner().as_slice());
     }
+
+    /// Updates the uniform buffer with new data.
+    ///
+    /// This method bypasses the `encase` crate and writes the provided bytes directly to the buffer.
+    /// Use this method when you have already prepared byte-level uniform data (e.g., from another crate).
+    ///
+    /// # Arguments
+    /// * `queue` - The wgpu queue used to write data to the buffer.
+    /// * `bytes` - The raw byte data of the uniform. Must be correctly aligned and padded for WGSL.
+    pub fn update_uniforms_bytes(&mut self, queue: &wgpu::Queue, bytes: &[u8]) {
+        queue.write_buffer(&self.buffer, 0, bytes);
+    }
 }
 
 /// Creates a bind group layout for a uniform buffer.
@@ -105,4 +117,3 @@ fn create_uniforms_bind_group(
         }],
     })
 }
-

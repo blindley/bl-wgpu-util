@@ -399,6 +399,12 @@ impl BasicRenderer {
         }
     }
 
+    pub fn update_uniforms_bytes(&mut self, bytes: &[u8]) {
+        if let Some(uniform_data) = self.uniform_data.as_mut() {
+            uniform_data.update_uniforms_bytes(&self.queue, bytes);
+        }
+    }
+
     pub fn set_texture_view(&mut self, texture_view: wgpu::TextureView) {
         if let Some(texture_data) = self.texture_data.as_mut() {
             texture_data.set_texture_view(&self.device, texture_view);
