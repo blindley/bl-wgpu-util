@@ -247,21 +247,29 @@ impl BasicRenderer {
         &self,
         encoder: &mut wgpu::CommandEncoder,
         view: &wgpu::TextureView,
-        depth_view: &wgpu::TextureView,
+        depth_view: Option<&wgpu::TextureView>,
         viewport: Option<Viewport>,
         buffer: Option<&wgpu::Buffer>,
         range: std::ops::Range<u32>,
     ) {
-        let depth_stencil_attachment =
-            self.has_depth
-                .then(|| wgpu::RenderPassDepthStencilAttachment {
-                    view: depth_view,
-                    depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
-                        store: wgpu::StoreOp::Store,
-                    }),
-                    stencil_ops: None,
-                });
+        let depth_stencil_attachment = {
+            if self.has_depth {
+                if let Some(depth_view) = depth_view {
+                    Some(wgpu::RenderPassDepthStencilAttachment {
+                        view: depth_view,
+                        depth_ops: Some(wgpu::Operations {
+                            load: wgpu::LoadOp::Load,
+                            store: wgpu::StoreOp::Store,
+                        }),
+                        stencil_ops: None,
+                    })
+                } else {
+                    panic!("depth_view is required if has_depth is true");
+                }
+            } else {
+                None
+            }
+        };
 
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: self._make_label("render pass").as_deref(),
@@ -319,7 +327,7 @@ impl BasicRenderer {
         &self,
         encoder: &mut wgpu::CommandEncoder,
         view: &wgpu::TextureView,
-        depth_view: &wgpu::TextureView,
+        depth_view: Option<&wgpu::TextureView>,
         viewport: Option<Viewport>,
         vertices: &[u8],
     ) {
@@ -345,12 +353,11 @@ impl BasicRenderer {
         );
     }
 
-    #[allow(dead_code)]
     pub fn render_buffer_range(
         &self,
         encoder: &mut wgpu::CommandEncoder,
         view: &wgpu::TextureView,
-        depth_view: &wgpu::TextureView,
+        depth_view: Option<&wgpu::TextureView>,
         viewport: Option<Viewport>,
         buffer: &wgpu::Buffer,
         range: std::ops::Range<u32>,
@@ -362,7 +369,7 @@ impl BasicRenderer {
         &self,
         encoder: &mut wgpu::CommandEncoder,
         view: &wgpu::TextureView,
-        depth_view: &wgpu::TextureView,
+        depth_view: Option<&wgpu::TextureView>,
         viewport: Option<Viewport>,
         range: std::ops::Range<u32>,
     ) {

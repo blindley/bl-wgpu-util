@@ -217,7 +217,6 @@ impl DynamicVertexDescriptorBuilder {
         }
     }
 
-    #[allow(dead_code)]
     pub fn with_stride(mut self, stride: usize) -> Self {
         self.stride = Some(stride);
         self

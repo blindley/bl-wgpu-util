@@ -1,6 +1,5 @@
 /// Represents the supported types for uniform members in WGSL.
 #[rustfmt::skip]
-#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UniformType {
     Bool,
@@ -135,4 +134,3 @@ impl DynamicUniformBuffer {
         s
     }
 }
-
