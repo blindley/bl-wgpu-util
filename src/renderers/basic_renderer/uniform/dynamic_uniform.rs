@@ -114,6 +114,33 @@ impl DynamicUniformBuffer {
             .map(|m| m.uniform_type)
     }
 
+    pub fn transform_matrix_expr(&self) -> Option<String> {
+        if let Some(ty) = self.member_type("transform_matrix") {
+            use UniformType::*;
+            match ty {
+                Mat4 => Some("uniforms.transform_matrix".into()),
+                _ => None,
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn uniform_color_expr(&self) -> Option<String> {
+        if let Some(ty) = self.member_type("color") {
+            use UniformType::*;
+            match ty {
+                F32 => Some("vec4(vec3(uniforms.color), 1.0)".into()),
+                F32x2 => Some("vec4(vec3(uniforms.color.x), uniforms.color.y)".into()),
+                F32x3 => Some("vec4(uniforms.color, 1.0)".into()),
+                F32x4 => Some("uniforms.color".into()),
+                _ => None,
+            }
+        } else {
+            None
+        }
+    }
+
     /// Generates a WGSL struct definition for the uniform data.
     ///
     /// # Arguments

@@ -49,11 +49,12 @@ impl BasicRendererDescriptor {
         let has_color = self.vertex_format.index_of("color").is_some();
         let has_uv = self.vertex_format.index_of("uv").is_some();
 
-        let has_uniforms = self.uniform_buffer.is_some();
-        let has_transform_matrix = self.uniform_buffer.as_ref().map_or(false, |ub| {
-            use super::uniform::UniformType;
-            matches!(ub.member_type("transform_matrix"), Some(UniformType::Mat4))
-        });
+        let (has_uniforms, transform_matrix_expr, uniform_color_expr) =
+            if let Some(ub) = self.uniform_buffer.as_ref() {
+                (true, ub.transform_matrix_expr(), ub.uniform_color_expr())
+            } else {
+                (false, None, None)
+            };
 
         let hardcoded = self.hardcoded_vertices.is_some();
 
@@ -122,10 +123,10 @@ impl BasicRendererDescriptor {
         }
         line!("    var out: VertexOutput;");
 
-        let matmul = if has_transform_matrix {
-            "uniforms.transform_matrix * "
+        let matmul = if let Some(expr) = &transform_matrix_expr {
+            format!("{expr} *")
         } else {
-            ""
+            String::new()
         };
 
         line!(format!(
@@ -155,12 +156,25 @@ impl BasicRendererDescriptor {
         line!("@fragment");
         line!("fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {");
 
-        match (has_color, self.has_texture) {
-            (false, false) => line!("    return vec4<f32>(1.0, 1.0, 1.0, 1.0);"),
-            (true, false) => line!("    return in.color;"),
-            (false, true) => line!("    return textureSample(tex, tex_sampler, in.uv);"),
-            (true, true) => line!("    return in.color * textureSample(tex, tex_sampler, in.uv);"),
+        let mut color_exprs = Vec::new();
+        if let Some(expr) = &uniform_color_expr {
+            color_exprs.push(expr.to_string());
         }
+
+        if has_color {
+            color_exprs.push("in.color".to_string());
+        }
+
+        if self.has_texture {
+            color_exprs.push("textureSample(tex, tex_sampler, in.uv)".to_string());
+        }
+
+        if color_exprs.is_empty() {
+            color_exprs.push("vec4<f32>(1.0, 1.0, 1.0, 1.0)".to_string());
+        }
+
+        let color_expr = color_exprs.join(" * ");
+        line!(format!("    return {color_expr};"));
 
         line!("}");
 
