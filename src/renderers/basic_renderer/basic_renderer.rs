@@ -136,7 +136,7 @@ impl BasicRendererDescriptor {
         if has_color {
             line!(format!(
                 "    out.color = {};",
-                self.vertex_format.code_gen_color_expr()
+                self.vertex_format.code_gen_color_expr().unwrap()
             ));
         }
 

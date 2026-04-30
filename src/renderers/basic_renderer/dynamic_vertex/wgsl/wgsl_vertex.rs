@@ -63,7 +63,10 @@ impl WgslVertexDescriptor {
         let mut s = String::new();
         s.push_str("struct VertexOutput {\n");
         s.push_str("    @builtin(position) position: vec4<f32>,\n");
-        s.push_str("    @location(0) color: vec4<f32>,\n");
+
+        if self.index_of("color").is_some() {
+            s.push_str(&format!("    @location(0) color: vec4<f32>,\n"));
+        }
 
         if self.index_of("uv").is_some() {
             s.push_str(&format!("    @location(1) uv: vec2<f32>,\n"));
@@ -95,21 +98,19 @@ impl WgslVertexDescriptor {
 
     /// Generates the WGSL code for the color expression for output from
     /// the vertex shader.
-    pub fn code_gen_color_expr(&self) -> String {
-        let default = "vec4<f32>(1.0)";
+    pub fn code_gen_color_expr(&self) -> Option<String> {
         if let Some(index) = self.index_of("color") {
             use WgslAttributeType::*;
             match self.attributes[index].attribute {
-                F32 => "vec4<f32>(vec3(in.color), 1.0)",
-                F32x2 => "vec4<f32>(vec3(in.color.x), in.color.y)",
-                F32x3 => "vec4<f32>(in.color, 1.0)",
-                F32x4 => "in.color",
-                _ => default,
+                F32 => Some("vec4<f32>(vec3(in.color), 1.0)".to_string()),
+                F32x2 => Some("vec4<f32>(vec3(in.color.x), in.color.y)".to_string()),
+                F32x3 => Some("vec4<f32>(in.color, 1.0)".to_string()),
+                F32x4 => Some("in.color".to_string()),
+                _ => None,
             }
         } else {
-            default
+            None
         }
-        .to_string()
     }
 
     /// Generates the WGSL code for the uv expression for output from

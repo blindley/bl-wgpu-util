@@ -122,7 +122,7 @@ impl DynamicVertexDescriptor {
         w.code_gen_position_expr()
     }
 
-    pub fn code_gen_color_expr(&self) -> String {
+    pub fn code_gen_color_expr(&self) -> Option<String> {
         // TODO: this is so inefficient...
         use super::wgsl::wgsl_vertex::WgslVertexDescriptor;
         let w = WgslVertexDescriptor::from(self.clone());
