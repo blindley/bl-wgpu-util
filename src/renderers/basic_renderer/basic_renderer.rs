@@ -317,6 +317,10 @@ impl BasicRenderer {
         render_pass.set_pipeline(&self.pipeline);
 
         if let Some(viewport) = viewport {
+            if !viewport.area_is_positive() {
+                return;
+            }
+
             render_pass.set_viewport(
                 viewport.x,
                 viewport.y,

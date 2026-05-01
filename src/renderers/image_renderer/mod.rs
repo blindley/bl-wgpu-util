@@ -27,9 +27,11 @@ impl Renderer {
         &self,
         encoder: &mut wgpu::CommandEncoder,
         view: &wgpu::TextureView,
-        viewport: Viewport,
+        viewport: Option<Viewport>,
     ) {
-        if viewport.width <= 0.0 || viewport.height <= 0.0 {
+        let viewport = viewport.unwrap_or(Viewport::from(view.texture().size()));
+
+        if !viewport.area_is_positive() {
             return;
         }
 

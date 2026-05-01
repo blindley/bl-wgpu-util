@@ -62,4 +62,8 @@ impl Viewport {
     pub fn apply(&self, render_pass: &mut wgpu::RenderPass) {
         render_pass.set_viewport(self.x, self.y, self.width, self.height, 0.0, 1.0);
     }
+
+    pub fn area_is_positive(&self) -> bool {
+        self.width > 0.0 && self.height > 0.0
+    }
 }

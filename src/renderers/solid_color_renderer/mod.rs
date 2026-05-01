@@ -45,14 +45,10 @@ impl Renderer {
         &self,
         encoder: &mut wgpu::CommandEncoder,
         view: &wgpu::TextureView,
-        viewport: Viewport,
+        viewport: Option<Viewport>,
     ) {
-        if viewport.width <= 0.0 || viewport.height <= 0.0 {
-            return;
-        }
-
         self.basic_renderer
-            .render_bufferless(encoder, view, None, Some(viewport), 0..6);
+            .render_bufferless(encoder, view, None, viewport, 0..6);
     }
 
     pub fn new(
