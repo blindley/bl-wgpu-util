@@ -5,7 +5,7 @@ use super::basic_renderer::{BasicRenderer, BasicRendererDescriptor, DynamicUnifo
 
 macro_rules! renderer_name {
     () => {
-        "Solid Color Renderer"
+        "Clear Color Renderer"
     };
 }
 macro_rules! make_label {
@@ -15,7 +15,7 @@ macro_rules! make_label {
 }
 
 #[derive(encase::ShaderType)]
-pub struct ColorOnlyUniform {
+struct ColorOnlyUniform {
     pub color: glam::Vec4,
 }
 
@@ -36,25 +36,15 @@ impl ColorOnlyUniform {
     }
 }
 
-pub struct Renderer {
+pub struct ClearColorRenderer {
     basic_renderer: BasicRenderer,
 }
 
-impl Renderer {
-    pub fn render(
-        &self,
-        encoder: &mut wgpu::CommandEncoder,
-        view: &wgpu::TextureView,
-        viewport: Option<Viewport>,
-    ) {
-        self.basic_renderer
-            .render_bufferless(encoder, view, None, viewport, 0..6);
-    }
-
+impl ClearColorRenderer {
     pub fn new(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        surface_conf: &wgpu::SurfaceConfiguration,
+        format: &wgpu::TextureFormat,
     ) -> anyhow::Result<Self> {
         let vertices: [f32; 12] = [
             -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
@@ -72,20 +62,28 @@ impl Renderer {
         };
 
         let basic_renderer = BasicRenderer::new(
-            Some(make_label!("BasicRenderer - Solid Color").to_string()),
+            Some(make_label!("BasicRenderer - Clear Color").to_string()),
             device,
             queue,
-            &surface_conf.format,
+            format,
             &desc,
         );
 
         Ok(Self { basic_renderer })
     }
 
-    pub fn set_color(&mut self, color: [f32; 4]) {
-        let uniform = ColorOnlyUniform {
-            color: glam::Vec4::from(color),
-        };
+    pub fn render(
+        &self,
+        encoder: &mut wgpu::CommandEncoder,
+        view: &wgpu::TextureView,
+        viewport: Option<Viewport>,
+    ) {
+        self.basic_renderer
+            .render_bufferless(encoder, view, None, viewport, 0..6);
+    }
+
+    pub fn set_color(&mut self, color: glam::Vec4) {
+        let uniform = ColorOnlyUniform { color };
         self.basic_renderer.update_uniforms_bytes(&uniform.bytes());
     }
 }

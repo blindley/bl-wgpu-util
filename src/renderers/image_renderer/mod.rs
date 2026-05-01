@@ -14,7 +14,7 @@ macro_rules! make_label {
     };
 }
 
-pub struct Renderer {
+pub struct ImageRenderer {
     basic_renderer: BasicRenderer,
     texture_view: wgpu::TextureView,
     linear_sampler: wgpu::Sampler,
@@ -22,7 +22,72 @@ pub struct Renderer {
     custom_sampler: Option<wgpu::Sampler>,
 }
 
-impl Renderer {
+impl ImageRenderer {
+    pub fn new(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        format: &wgpu::TextureFormat,
+        texture: &wgpu::Texture,
+    ) -> anyhow::Result<Self> {
+        use super::basic_renderer::DynamicVertexDescriptorBuilder;
+
+        let vertices = {
+            #[rustfmt::skip]
+            let vertices: [f32; 24] = [
+                -1.0, 1.0, 0.0, 0.0,
+                -1.0, -1.0, 0.0, 1.0,
+                1.0, -1.0, 1.0, 1.0,
+
+                -1.0, 1.0, 0.0, 0.0,
+                1.0, -1.0, 1.0, 1.0,
+                1.0, 1.0, 1.0, 0.0,
+            ];
+
+            bytemuck::cast_slice(&vertices).to_vec()
+        };
+
+        let desc = BasicRendererDescriptor {
+            vertex_format: DynamicVertexDescriptorBuilder::new()
+                .with_attribute("position", wgpu::VertexFormat::Float32x2, None)
+                .with_attribute("uv", wgpu::VertexFormat::Float32x2, None)
+                .build(),
+            has_texture: true,
+            hardcoded_vertices: Some(vertices),
+            ..Default::default()
+        };
+
+        let mut basic_renderer = BasicRenderer::new(
+            Some(make_label!("BasicRenderer - Image").to_string()),
+            device,
+            queue,
+            format,
+            &desc,
+        );
+
+        let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        basic_renderer.set_texture_view(texture_view.clone());
+
+        let linear_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            mag_filter: wgpu::FilterMode::Linear,
+            ..Default::default()
+        });
+
+        let nearest_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            mag_filter: wgpu::FilterMode::Nearest,
+            ..Default::default()
+        });
+
+        basic_renderer.set_sampler(linear_sampler.clone());
+
+        Ok(Self {
+            basic_renderer,
+            texture_view,
+            linear_sampler,
+            nearest_sampler,
+            custom_sampler: None,
+        })
+    }
+
     pub fn render(
         &self,
         encoder: &mut wgpu::CommandEncoder,
@@ -63,71 +128,6 @@ impl Renderer {
 
         self.basic_renderer
             .render_bufferless(encoder, view, None, Some(viewport), 0..6);
-    }
-
-    pub fn new(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        surface_conf: &wgpu::SurfaceConfiguration,
-        texture: &wgpu::Texture,
-    ) -> anyhow::Result<Self> {
-        use super::basic_renderer::DynamicVertexDescriptorBuilder;
-
-        let vertices = {
-            #[rustfmt::skip]
-            let vertices: [f32; 24] = [
-                -1.0, 1.0, 0.0, 0.0,
-                -1.0, -1.0, 0.0, 1.0,
-                1.0, -1.0, 1.0, 1.0,
-
-                -1.0, 1.0, 0.0, 0.0,
-                1.0, -1.0, 1.0, 1.0,
-                1.0, 1.0, 1.0, 0.0,
-            ];
-
-            bytemuck::cast_slice(&vertices).to_vec()
-        };
-
-        let desc = BasicRendererDescriptor {
-            vertex_format: DynamicVertexDescriptorBuilder::new()
-                .with_attribute("position", wgpu::VertexFormat::Float32x2, None)
-                .with_attribute("uv", wgpu::VertexFormat::Float32x2, None)
-                .build(),
-            has_texture: true,
-            hardcoded_vertices: Some(vertices),
-            ..Default::default()
-        };
-
-        let mut basic_renderer = BasicRenderer::new(
-            Some(make_label!("BasicRenderer - Image").to_string()),
-            device,
-            queue,
-            &surface_conf.format,
-            &desc,
-        );
-
-        let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-        basic_renderer.set_texture_view(texture_view.clone());
-
-        let linear_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            mag_filter: wgpu::FilterMode::Linear,
-            ..Default::default()
-        });
-
-        let nearest_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            mag_filter: wgpu::FilterMode::Nearest,
-            ..Default::default()
-        });
-
-        basic_renderer.set_sampler(linear_sampler.clone());
-
-        Ok(Self {
-            basic_renderer,
-            texture_view,
-            linear_sampler,
-            nearest_sampler,
-            custom_sampler: None,
-        })
     }
 
     pub fn set_linear_sampling(&mut self) {
