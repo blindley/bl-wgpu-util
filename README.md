@@ -4,8 +4,6 @@ A personal utility library for building [wgpu](https://github.com/gfx-rs/wgpu) a
 It provides a small set of reusable building blocks—depth buffers, viewports, image/texture helpers,
 and a flexible renderer abstraction—to reduce boilerplate when writing wgpu-based projects.
 
-> **Note:** This crate is personal/experimental and not published to crates.io. APIs may change without notice.
-
 ## Features
 
 - **`DepthBuffer`** — Creates and manages a `Depth32Float` texture with resize support.
@@ -100,14 +98,14 @@ renderer.render_vertices(&mut encoder, &view, Some(&depth_view), Some(viewport),
 
 Key descriptor options:
 
-| Field | Description |
-|---|---|
-| `vertex_format` | Vertex layout; drives auto-generated WGSL input struct and pipeline layout |
-| `uniform_buffer` | Optional `DynamicUniformBuffer`; creates bind group 0 with a `Uniforms` struct |
-| `has_texture` | Expects a texture + sampler in bind group 1 |
-| `has_depth` | Enables `Depth32Float` depth testing |
-| `hardcoded_vertices` | Bakes vertex data directly into the generated shader |
-| `custom_shader` | Bypasses auto-generation entirely |
+| Field                | Description                                                                    |
+| -------------------- | ------------------------------------------------------------------------------ |
+| `vertex_format`      | Vertex layout; drives auto-generated WGSL input struct and pipeline layout     |
+| `uniform_buffer`     | Optional `DynamicUniformBuffer`; creates bind group 0 with a `Uniforms` struct |
+| `has_texture`        | Expects a texture + sampler in bind group 1                                    |
+| `has_depth`          | Enables `Depth32Float` depth testing                                           |
+| `hardcoded_vertices` | Bakes vertex data directly into the generated shader                           |
+| `custom_shader`      | Bypasses auto-generation entirely                                              |
 
 #### `SolidColorRenderer`
 
@@ -138,21 +136,12 @@ renderer.set_texture(&new_texture);
 
 ## Dependencies
 
-| Crate | Purpose |
-|---|---|
-| `wgpu` | GPU API |
-| `image` | Image file decoding |
-| `encase` | WGSL-compatible uniform buffer layout |
-| `glam` | Math types (`Vec4`, `Mat4`, …) with `encase` support |
-| `bytemuck` | Safe byte casting for vertex/uniform data |
-| `half` | f16 support via `bytemuck` |
-| `anyhow` | Error handling |
-
-## License
-
-Licensed under either of
-
-- [Apache License, Version 2.0](LICENSE-APACHE)
-- [MIT License](LICENSE-MIT)
-
-at your option.
+| Crate      | Purpose                                              |
+| ---------- | ---------------------------------------------------- |
+| `wgpu`     | GPU API                                              |
+| `image`    | Image file decoding                                  |
+| `encase`   | WGSL-compatible uniform buffer layout                |
+| `glam`     | Math types (`Vec4`, `Mat4`, …) with `encase` support |
+| `bytemuck` | Safe byte casting for vertex/uniform data            |
+| `half`     | f16 support via `bytemuck`                           |
+| `anyhow`   | Error handling                                       |
