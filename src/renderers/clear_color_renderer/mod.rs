@@ -1,7 +1,8 @@
 use crate::Viewport;
 use crate::wgpu;
 
-use super::basic_renderer::{BasicRenderer, BasicRendererDescriptor, DynamicUniformBuffer};
+use super::basic_renderer::{BasicRenderer, BasicRendererDescriptor};
+use super::basic_renderer::{BasicUniform, UniformRgba};
 
 macro_rules! renderer_name {
     () => {
@@ -12,28 +13,6 @@ macro_rules! make_label {
     ($object:expr) => {
         concat!(renderer_name!(), " : ", $object)
     };
-}
-
-#[derive(encase::ShaderType)]
-struct ColorOnlyUniform {
-    pub color: glam::Vec4,
-}
-
-impl ColorOnlyUniform {
-    pub fn create_uniform_buffer() -> DynamicUniformBuffer {
-        use super::basic_renderer::{DynamicUniformBufferBuilder, UniformType};
-        use encase::ShaderType;
-
-        DynamicUniformBufferBuilder::new(Self::min_size())
-            .with_member("color", UniformType::F32x4)
-            .build()
-    }
-
-    pub fn bytes(&self) -> Vec<u8> {
-        let mut buffer = encase::UniformBuffer::new(Vec::new());
-        buffer.write(self).unwrap();
-        buffer.into_inner()
-    }
 }
 
 pub struct ClearColorRenderer {
@@ -56,7 +35,7 @@ impl ClearColorRenderer {
             vertex_format: super::basic_renderer::DynamicVertexDescriptorBuilder::new()
                 .with_attribute("position", wgpu::VertexFormat::Float32x2, None)
                 .build(),
-            uniform_buffer: Some(ColorOnlyUniform::create_uniform_buffer()),
+            uniform_buffer: Some(UniformRgba::descriptor()),
             hardcoded_vertices: Some(vertices),
             ..Default::default()
         };
@@ -83,7 +62,7 @@ impl ClearColorRenderer {
     }
 
     pub fn set_color(&mut self, color: glam::Vec4) {
-        let uniform = ColorOnlyUniform { color };
-        self.basic_renderer.update_uniforms_bytes(&uniform.bytes());
+        let uniform = UniformRgba { color };
+        self.basic_renderer.update_uniforms_bytes(&uniform.buffer());
     }
 }

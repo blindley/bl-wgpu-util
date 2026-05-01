@@ -1,5 +1,6 @@
-use super::basic_renderer::{BasicRenderer, BasicRendererDescriptor};
 use crate::Viewport;
+
+use super::basic_renderer::{BasicRenderer, BasicRendererDescriptor};
 
 use crate::wgpu;
 
