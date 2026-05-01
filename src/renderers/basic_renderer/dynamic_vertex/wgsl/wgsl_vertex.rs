@@ -133,10 +133,10 @@ impl WgslVertexDescriptor {
 impl From<DynamicVertexDescriptor> for WgslVertexDescriptor {
     fn from(value: DynamicVertexDescriptor) -> Self {
         let attributes = value
-            .attributes
+            .attributes()
             .into_iter()
             .map(|attr| NamedWgslAttributeDescriptor {
-                name: attr.name,
+                name: attr.name.clone(),
                 attribute: attr.format.into(),
             })
             .collect();

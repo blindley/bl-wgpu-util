@@ -61,14 +61,29 @@ pub struct NamedAttributeDescriptor {
 #[derive(Debug, Clone, Default)]
 pub struct DynamicVertexDescriptor {
     /// The total size of a single vertex in bytes.
-    pub stride: usize,
+    stride: usize,
     /// The required alignment for this vertex structure.
-    pub _align: usize,
+    align: usize,
     /// The list of attributes that make up the vertex.
-    pub attributes: Vec<NamedAttributeDescriptor>,
+    attributes: Vec<NamedAttributeDescriptor>,
 }
 
 impl DynamicVertexDescriptor {
+    /// Returns the stride (total size of a single vertex in bytes).
+    pub fn stride(&self) -> usize {
+        self.stride
+    }
+
+    /// Returns the alignment of the vertex.
+    pub fn align(&self) -> usize {
+        self.align
+    }
+
+    /// Returns the attributes of the vertex.
+    pub fn attributes(&self) -> &Vec<NamedAttributeDescriptor> {
+        &self.attributes
+    }
+
     /// Finds the index of the first attribute with the given name.
     pub fn index_of(&self, name: &str) -> Option<usize> {
         self.attributes.iter().position(|a| a.name == name)
@@ -101,42 +116,42 @@ impl DynamicVertexDescriptor {
         }
     }
 
-    pub fn code_gen_vertex_input(&self, with_locations: bool) -> String {
+    pub(crate) fn code_gen_vertex_input(&self, with_locations: bool) -> String {
         // TODO: this is so inefficient...
         use super::wgsl::wgsl_vertex::WgslVertexDescriptor;
         let w = WgslVertexDescriptor::from(self.clone());
         w.code_gen_vertex_input(with_locations)
     }
 
-    pub fn code_gen_vertex_output(&self) -> String {
+    pub(crate) fn code_gen_vertex_output(&self) -> String {
         // TODO: this is so inefficient...
         use super::wgsl::wgsl_vertex::WgslVertexDescriptor;
         let w = WgslVertexDescriptor::from(self.clone());
         w.code_gen_vertex_output()
     }
 
-    pub fn code_gen_position_expr(&self) -> String {
+    pub(crate) fn code_gen_position_expr(&self) -> String {
         // TODO: this is so inefficient...
         use super::wgsl::wgsl_vertex::WgslVertexDescriptor;
         let w = WgslVertexDescriptor::from(self.clone());
         w.code_gen_position_expr()
     }
 
-    pub fn code_gen_color_expr(&self) -> Option<String> {
+    pub(crate) fn code_gen_color_expr(&self) -> Option<String> {
         // TODO: this is so inefficient...
         use super::wgsl::wgsl_vertex::WgslVertexDescriptor;
         let w = WgslVertexDescriptor::from(self.clone());
         w.code_gen_color_expr()
     }
 
-    pub fn code_gen_uv_expr(&self) -> Option<String> {
+    pub(crate) fn code_gen_uv_expr(&self) -> Option<String> {
         // TODO: this is so inefficient...
         use super::wgsl::wgsl_vertex::WgslVertexDescriptor;
         let w = WgslVertexDescriptor::from(self.clone());
         w.code_gen_uv_expr()
     }
 
-    pub fn code_gen_hardcoded_vertices(&self, vertex_buffer: &[u8]) -> String {
+    pub(crate) fn code_gen_hardcoded_vertices(&self, vertex_buffer: &[u8]) -> String {
         let mut s = String::new();
 
         let vertex_count = vertex_buffer.len() / self.stride;
@@ -212,7 +227,7 @@ impl DynamicVertexDescriptorBuilder {
 
         DynamicVertexDescriptor {
             stride,
-            _align: self.align,
+            align: self.align,
             attributes: self.attributes,
         }
     }

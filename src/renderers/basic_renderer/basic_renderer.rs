@@ -242,7 +242,7 @@ impl BasicRenderer {
             format: *format,
             has_depth: desc.has_depth,
             pipeline,
-            vertex_stride: desc.vertex_format.stride,
+            vertex_stride: desc.vertex_format.stride(),
 
             uniform_data,
             texture_data,

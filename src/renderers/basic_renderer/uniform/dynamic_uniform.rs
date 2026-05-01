@@ -114,7 +114,7 @@ impl DynamicUniformBuffer {
             .map(|m| m.uniform_type)
     }
 
-    pub fn transform_matrix_expr(&self) -> Option<String> {
+    pub(crate) fn transform_matrix_expr(&self) -> Option<String> {
         if let Some(ty) = self.member_type("transform_matrix") {
             use UniformType::*;
             match ty {
@@ -126,7 +126,7 @@ impl DynamicUniformBuffer {
         }
     }
 
-    pub fn uniform_color_expr(&self) -> Option<String> {
+    pub(crate) fn uniform_color_expr(&self) -> Option<String> {
         if let Some(ty) = self.member_type("color") {
             use UniformType::*;
             match ty {
@@ -145,7 +145,7 @@ impl DynamicUniformBuffer {
     ///
     /// # Arguments
     /// * `struct_name` - The name to give the generated WGSL struct.
-    pub fn code_gen_uniform_struct(&self, struct_name: &str) -> String {
+    pub(crate) fn code_gen_uniform_struct(&self, struct_name: &str) -> String {
         let mut s = String::new();
         s.push_str(&format!("struct {struct_name} {{\n"));
 

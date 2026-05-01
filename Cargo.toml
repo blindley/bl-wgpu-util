@@ -1,6 +1,6 @@
 [package]
 name = "bl-wgpu-util"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 description = "Personal utility library for wgpu applications: depth buffers, viewports, image/texture helpers, and a flexible renderer abstraction."
 license = "MIT OR Apache-2.0"

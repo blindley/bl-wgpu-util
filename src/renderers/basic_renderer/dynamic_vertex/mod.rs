@@ -8,5 +8,6 @@ mod attribute;
 mod vertex;
 mod wgsl;
 
-pub use vertex::DynamicVertexDescriptor;
-pub use vertex::DynamicVertexDescriptorBuilder;
+pub use vertex::{
+    DynamicVertexDescriptor, DynamicVertexDescriptorBuilder, NamedAttributeDescriptor,
+};
