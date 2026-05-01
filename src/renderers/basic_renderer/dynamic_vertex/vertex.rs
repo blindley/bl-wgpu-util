@@ -49,6 +49,7 @@ pub struct NamedAttributeDescriptor {
 /// A descriptor that defines the layout of a vertex buffer.
 ///
 /// Build using [`DynamicVertexDescriptorBuilder`](DynamicVertexDescriptorBuilder).
+/// For use in [`BasicRendererDescriptor`](super::super::BasicRendererDescriptor).
 #[derive(Debug, Clone, Default)]
 pub struct DynamicVertexDescriptor {
     /// The total size of a single vertex in bytes.
