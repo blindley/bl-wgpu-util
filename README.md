@@ -150,4 +150,9 @@ renderer.set_texture(&new_texture);
 
 ## License
 
-This is a personal utility crate with no declared license. All rights reserved.
+Licensed under either of
+
+- [Apache License, Version 2.0](LICENSE-APACHE)
+- [MIT License](LICENSE-MIT)
+
+at your option.

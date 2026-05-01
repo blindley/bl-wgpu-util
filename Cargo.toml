@@ -2,6 +2,12 @@
 name = "bl-wgpu-util"
 version = "0.1.2"
 edition = "2024"
+description = "Personal utility library for wgpu applications: depth buffers, viewports, image/texture helpers, and a flexible renderer abstraction."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/blindley/bl-wgpu-util"
+keywords = ["wgpu", "graphics", "renderer", "gpu", "texture"]
+categories = ["rendering", "graphics"]
+readme = "README.md"
 
 [dependencies]
 anyhow = "1.0.102"
