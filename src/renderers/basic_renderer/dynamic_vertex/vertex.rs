@@ -48,16 +48,7 @@ pub struct NamedAttributeDescriptor {
 
 /// A descriptor that defines the layout of a vertex buffer.
 ///
-/// Any attributes can be specified, but there are three "special" attributes: `position`, `color`, and `uv`.
-/// Attributes with these names will automatically be used appropriately by the default shader code:
-///
-/// * **`position`**: Mapped to the clip position in the vertex shader output.
-///   Missing components (x, y, z) default to 0.0, and w defaults to 1.0.
-/// * **`color`**: Mapped to the vertex color. Supports f32 (grayscale), vec2 (grayscale+alpha),
-///   vec3 (RGB), and vec4 (RGBA).
-/// * **`uv`**: Mapped to texture coordinates. Mapped (x, y) -> (u, v); extra components are discarded.
-///
-/// Any other attributes will be passed to the vertex shader but may require a custom shader to be useful.
+/// Build using [`DynamicVertexDescriptorBuilder`](DynamicVertexDescriptorBuilder).
 #[derive(Debug, Clone, Default)]
 pub struct DynamicVertexDescriptor {
     /// The total size of a single vertex in bytes.
@@ -198,7 +189,20 @@ impl DynamicVertex {
 // DynamicVertexDescriptorBuilder
 ////////////////////////////////////////////////////////////////////////////////
 
-/// A builder for creating a `DynamicVertexDescriptor` with automatic offset and alignment calculation.
+/// A builder for creating a [`DynamicVertexDescriptor`](DynamicVertexDescriptor) with automatic offset and alignment calculation.
+///
+/// Any attributes can be specified, but there are three "special" attributes: `position`, `color`, and `uv`.
+/// Attributes with these names will automatically be used appropriately by the default shader code,
+/// as long as they are of a type which maps to `f32`, `vec2<f32>`, `vec3<f32>`, `vec4<f32>`. This includes
+/// explicit float types and vecs, but also normalized integer types (e.g. Unorm8x4, Unorm16x2, etc).
+///
+/// * **`position`**: Mapped to the clip position in the vertex shader output.
+///   Missing components (x, y, z) default to 0.0, and w defaults to 1.0.
+/// * **`color`**: Mapped to the vertex color. Supports f32 (grayscale), vec2 (grayscale+alpha),
+///   vec3 (RGB), and vec4 (RGBA).
+/// * **`uv`**: Mapped to texture coordinates. Mapped (x, y) -> (u, v); extra components are discarded.
+///
+/// Any other attributes will be passed to the vertex shader but may require a custom shader to be useful.
 pub struct DynamicVertexDescriptorBuilder {
     stride: Option<usize>,
     align: usize,

@@ -45,6 +45,18 @@ pub struct BasicRendererDescriptor {
 }
 
 impl BasicRendererDescriptor {
+    /// Creates the WGSL shader code for the renderer.
+    ///
+    /// This method uses the `vertex_format`, `uniform_buffer`, `has_texture`, `has_depth`,
+    /// `hardcoded_vertices`, and `custom_shader` fields to generate the WGSL code.
+    ///
+    /// This method can be very useful even if you want to use your own shaders, because it
+    /// generates the correct attribute locations and uniform bindings. So you can use the
+    /// generated code as a starting point for your own shaders.
+    ///
+    /// # Returns
+    ///
+    /// A `String` containing the WGSL shader code.
     pub fn create_shader_code(&self) -> String {
         let has_color = self.vertex_format.index_of("color").is_some();
         let has_uv = self.vertex_format.index_of("uv").is_some();
