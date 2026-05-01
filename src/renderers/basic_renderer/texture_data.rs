@@ -36,22 +36,43 @@ impl TextureData {
         &self.bind_group
     }
 
+    fn _recreate_bind_group(&mut self, device: &wgpu::Device) {
+        if let Some(texture_view) = self.texture_view.as_ref() {
+            self.bind_group = Some(device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("texture bind group"),
+                layout: &self.bind_group_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: self.texture_binding_index,
+                        resource: wgpu::BindingResource::TextureView(texture_view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: self.sampler_binding_index,
+                        resource: wgpu::BindingResource::Sampler(&self.sampler),
+                    },
+                ],
+            }));
+        }
+    }
+
     pub fn set_texture_view(&mut self, device: &wgpu::Device, texture_view: wgpu::TextureView) {
+        if let Some(old_texture_view) = self.texture_view.as_ref() {
+            if old_texture_view.texture() == texture_view.texture() {
+                return;
+            }
+        }
+
         self.texture_view = Some(texture_view.clone());
-        self.bind_group = Some(device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("texture bind group"),
-            layout: &self.bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: self.texture_binding_index,
-                    resource: wgpu::BindingResource::TextureView(&texture_view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: self.sampler_binding_index,
-                    resource: wgpu::BindingResource::Sampler(&self.sampler),
-                },
-            ],
-        }));
+        self._recreate_bind_group(device);
+    }
+
+    pub fn set_sampler(&mut self, device: &wgpu::Device, sampler: wgpu::Sampler) {
+        if self.sampler == sampler {
+            return;
+        }
+
+        self.sampler = sampler.clone();
+        self._recreate_bind_group(device);
     }
 }
 

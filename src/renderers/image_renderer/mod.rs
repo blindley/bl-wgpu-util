@@ -14,12 +14,12 @@ macro_rules! make_label {
     };
 }
 
-const LINEAR_SAMPLER_INDEX: usize = 0;
-const NEAREST_SAMPLER_INDEX: usize = 1;
-
 pub struct Renderer {
     basic_renderer: BasicRenderer,
     texture_view: wgpu::TextureView,
+    linear_sampler: wgpu::Sampler,
+    nearest_sampler: wgpu::Sampler,
+    custom_sampler: Option<wgpu::Sampler>,
 }
 
 impl Renderer {
@@ -107,18 +107,39 @@ impl Renderer {
         let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
         basic_renderer.set_texture_view(texture_view.clone());
 
+        let linear_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            mag_filter: wgpu::FilterMode::Linear,
+            ..Default::default()
+        });
+
+        let nearest_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            mag_filter: wgpu::FilterMode::Nearest,
+            ..Default::default()
+        });
+
+        basic_renderer.set_sampler(linear_sampler.clone());
+
         Ok(Self {
             basic_renderer,
             texture_view,
+            linear_sampler,
+            nearest_sampler,
+            custom_sampler: None,
         })
     }
 
     pub fn set_linear_sampling(&mut self) {
-        self.set_sampler_index(LINEAR_SAMPLER_INDEX);
+        self.basic_renderer.set_sampler(self.linear_sampler.clone());
     }
 
     pub fn set_nearest_sampling(&mut self) {
-        self.set_sampler_index(NEAREST_SAMPLER_INDEX);
+        self.basic_renderer
+            .set_sampler(self.nearest_sampler.clone());
+    }
+
+    pub fn set_custom_sampler(&mut self, sampler: wgpu::Sampler) {
+        self.basic_renderer.set_sampler(sampler.clone());
+        self.custom_sampler = Some(sampler);
     }
 
     pub fn set_texture(&mut self, texture: &wgpu::Texture) {
@@ -126,18 +147,6 @@ impl Renderer {
             self.texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
             self.basic_renderer
                 .set_texture_view(self.texture_view.clone());
-            // self.recreate_texture_bind_group();
         }
-    }
-
-    fn set_sampler_index(&mut self, _index: usize) {
-        // TODO: implement sampler configuration in basic renderer
-
-        // assert!(index < self.samplers.len());
-        // if self.current_sampler_index != index {
-        //     self.current_sampler_index = index;
-        //     self.recreate_texture_bind_group();
-        // }
-        println!("set_sampler_index not implemented");
     }
 }

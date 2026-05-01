@@ -410,6 +410,12 @@ impl BasicRenderer {
             texture_data.set_texture_view(&self.device, texture_view);
         }
     }
+
+    pub fn set_sampler(&mut self, sampler: wgpu::Sampler) {
+        if let Some(texture_data) = self.texture_data.as_mut() {
+            texture_data.set_sampler(&self.device, sampler);
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
