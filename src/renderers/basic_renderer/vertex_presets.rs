@@ -14,22 +14,132 @@ pub trait BasicVertex {
 
 pub trait BasicVertex2d {
     fn position(&self) -> glam::Vec2;
+    fn position_mut(&mut self) -> &mut glam::Vec2;
+
+    fn translate(&mut self, offset: impl Into<glam::Vec2>) {
+        *self.position_mut() += offset.into();
+    }
+
+    fn scale(&mut self, scale: impl Into<f32>) {
+        *self.position_mut() *= scale.into();
+    }
+
+    fn non_uniform_scale(&mut self, scale: impl Into<glam::Vec2>) {
+        *self.position_mut() *= scale.into();
+    }
+
+    fn transform(&mut self, mat: &glam::Mat4) {
+        let position = mat * self.position().extend(0.0).extend(1.0);
+        *self.position_mut() = glam::Vec2::new(position.x / position.w, position.y / position.w);
+    }
+
+    /// Creates a rectangle of 2-d vertices from the given vertex and its opposite corner.
+    ///
+    /// ## Requirement
+    /// `out.len() >= 6`
+    fn make_rect(&self, other: glam::Vec2, out: &mut [Self])
+    where
+        Self: Clone,
+    {
+        assert!(out.len() >= 6);
+        out[0] = self.clone();
+        out[1] = self.clone();
+        out[2] = self.clone();
+        out[3] = self.clone();
+        out[4] = self.clone();
+        out[5] = self.clone();
+
+        out[1].position_mut().y = other.y;
+        *out[2].position_mut() = other;
+
+        *out[4].position_mut() = other;
+        out[5].position_mut().x = other.x;
+    }
 }
 
 pub trait BasicVertex3d {
     fn position(&self) -> glam::Vec3;
+    fn position_mut(&mut self) -> &mut glam::Vec3;
+
+    fn translate(&mut self, offset: impl Into<glam::Vec3>) {
+        *self.position_mut() += offset.into();
+    }
+
+    fn scale(&mut self, scale: impl Into<f32>) {
+        *self.position_mut() *= scale.into();
+    }
+
+    fn non_uniform_scale(&mut self, scale: impl Into<glam::Vec3>) {
+        *self.position_mut() *= scale.into();
+    }
+
+    fn transform(&mut self, mat: &glam::Mat4) {
+        let position = mat * self.position().extend(1.0);
+        *self.position_mut() = glam::Vec3::new(
+            position.x / position.w,
+            position.y / position.w,
+            position.z / position.w,
+        );
+    }
 }
 
 pub trait BasicVertexRgb {
     fn color(&self) -> glam::Vec3;
+    fn color_mut(&mut self) -> &mut glam::Vec3;
 }
 
 pub trait BasicVertexRgba {
     fn color(&self) -> glam::Vec4;
+    fn color_mut(&mut self) -> &mut glam::Vec4;
 }
 
 pub trait BasicVertexUv {
     fn uv(&self) -> glam::Vec2;
+    fn uv_mut(&mut self) -> &mut glam::Vec2;
+}
+
+macro_rules! impl_accessor_trait {
+    ($type:ty, $trait:ty, $field:ident, $mut_accessor:ident, $ret:ty) => {
+        impl $trait for $type {
+            fn $field(&self) -> $ret {
+                self.$field
+            }
+
+            fn $mut_accessor(&mut self) -> &mut $ret {
+                &mut self.$field
+            }
+        }
+    };
+}
+
+macro_rules! impl_2d {
+    ($type:ty) => {
+        impl_accessor_trait!($type, BasicVertex2d, position, position_mut, glam::Vec2);
+    };
+}
+
+macro_rules! impl_3d {
+    ($type:ty) => {
+        impl_accessor_trait!($type, BasicVertex3d, position, position_mut, glam::Vec3);
+    };
+}
+
+macro_rules! impl_rgb {
+    ($type:ty) => {
+        impl_accessor_trait!($type, BasicVertexRgb, color, color_mut, glam::Vec3);
+    };
+}
+
+macro_rules! impl_rgba {
+    ($type:ty) => {
+        impl_accessor_trait!($type, BasicVertexRgba, color, color_mut, glam::Vec4);
+    };
+}
+
+macro_rules! impl_uv {
+    ($type:ty) => {
+        impl_accessor_trait!($type, BasicVertexUv, uv, uv_mut, glam::Vec2);
+    };
 }
 
 /// Vertex with 2D position.
@@ -55,11 +165,7 @@ impl BasicVertex for Vertex2d {
     }
 }
 
-impl BasicVertex2d for Vertex2d {
-    fn position(&self) -> glam::Vec2 {
-        self.position
-    }
-}
+impl_2d!(Vertex2d);
 
 /// Vertex with 3D position.
 #[repr(C)]
@@ -84,11 +190,7 @@ impl BasicVertex for Vertex3d {
     }
 }
 
-impl BasicVertex3d for Vertex3d {
-    fn position(&self) -> glam::Vec3 {
-        self.position
-    }
-}
+impl_3d!(Vertex3d);
 
 /// Vertex with 2D position and 3-channel color.
 #[repr(C)]
@@ -116,17 +218,8 @@ impl BasicVertex for Vertex2dRgb {
     }
 }
 
-impl BasicVertex2d for Vertex2dRgb {
-    fn position(&self) -> glam::Vec2 {
-        self.position
-    }
-}
-
-impl BasicVertexRgb for Vertex2dRgb {
-    fn color(&self) -> glam::Vec3 {
-        self.color
-    }
-}
+impl_2d!(Vertex2dRgb);
+impl_rgb!(Vertex2dRgb);
 
 /// Vertex with 2D position and 4-channel color.
 #[repr(C)]
@@ -156,17 +249,8 @@ impl BasicVertex for Vertex2dRgba {
     }
 }
 
-impl BasicVertex2d for Vertex2dRgba {
-    fn position(&self) -> glam::Vec2 {
-        self.position
-    }
-}
-
-impl BasicVertexRgba for Vertex2dRgba {
-    fn color(&self) -> glam::Vec4 {
-        self.color
-    }
-}
+impl_2d!(Vertex2dRgba);
+impl_rgba!(Vertex2dRgba);
 
 /// Vertex with 3D position and 3-channel color.
 #[repr(C)]
@@ -194,17 +278,8 @@ impl BasicVertex for Vertex3dRgb {
     }
 }
 
-impl BasicVertex3d for Vertex3dRgb {
-    fn position(&self) -> glam::Vec3 {
-        self.position
-    }
-}
-
-impl BasicVertexRgb for Vertex3dRgb {
-    fn color(&self) -> glam::Vec3 {
-        self.color
-    }
-}
+impl_3d!(Vertex3dRgb);
+impl_rgb!(Vertex3dRgb);
 
 /// Vertex with 3D position and 4-channel color.
 #[repr(C)]
@@ -234,17 +309,8 @@ impl BasicVertex for Vertex3dRgba {
     }
 }
 
-impl BasicVertex3d for Vertex3dRgba {
-    fn position(&self) -> glam::Vec3 {
-        self.position
-    }
-}
-
-impl BasicVertexRgba for Vertex3dRgba {
-    fn color(&self) -> glam::Vec4 {
-        self.color
-    }
-}
+impl_3d!(Vertex3dRgba);
+impl_rgba!(Vertex3dRgba);
 
 /// Vertex with 2D position and 2-channel texture coordinate.
 #[repr(C)]
@@ -272,17 +338,8 @@ impl BasicVertex for Vertex2dUv {
     }
 }
 
-impl BasicVertex2d for Vertex2dUv {
-    fn position(&self) -> glam::Vec2 {
-        self.position
-    }
-}
-
-impl BasicVertexUv for Vertex2dUv {
-    fn uv(&self) -> glam::Vec2 {
-        self.uv
-    }
-}
+impl_2d!(Vertex2dUv);
+impl_uv!(Vertex2dUv);
 
 /// Vertex with 3D position.
 #[repr(C)]
@@ -310,17 +367,8 @@ impl BasicVertex for Vertex3dUv {
     }
 }
 
-impl BasicVertex3d for Vertex3dUv {
-    fn position(&self) -> glam::Vec3 {
-        self.position
-    }
-}
-
-impl BasicVertexUv for Vertex3dUv {
-    fn uv(&self) -> glam::Vec2 {
-        self.uv
-    }
-}
+impl_3d!(Vertex3dUv);
+impl_uv!(Vertex3dUv);
 
 /// Vertex with 2D position and 3-channel color.
 #[repr(C)]
@@ -355,23 +403,9 @@ impl BasicVertex for Vertex2dRgbUv {
     }
 }
 
-impl BasicVertex2d for Vertex2dRgbUv {
-    fn position(&self) -> glam::Vec2 {
-        self.position
-    }
-}
-
-impl BasicVertexRgb for Vertex2dRgbUv {
-    fn color(&self) -> glam::Vec3 {
-        self.color
-    }
-}
-
-impl BasicVertexUv for Vertex2dRgbUv {
-    fn uv(&self) -> glam::Vec2 {
-        self.uv
-    }
-}
+impl_2d!(Vertex2dRgbUv);
+impl_rgb!(Vertex2dRgbUv);
+impl_uv!(Vertex2dRgbUv);
 
 /// Vertex with 2D position and 4-channel color.
 #[repr(C)]
@@ -406,23 +440,9 @@ impl BasicVertex for Vertex2dRgbaUv {
     }
 }
 
-impl BasicVertex2d for Vertex2dRgbaUv {
-    fn position(&self) -> glam::Vec2 {
-        self.position
-    }
-}
-
-impl BasicVertexRgba for Vertex2dRgbaUv {
-    fn color(&self) -> glam::Vec4 {
-        self.color
-    }
-}
-
-impl BasicVertexUv for Vertex2dRgbaUv {
-    fn uv(&self) -> glam::Vec2 {
-        self.uv
-    }
-}
+impl_2d!(Vertex2dRgbaUv);
+impl_rgba!(Vertex2dRgbaUv);
+impl_uv!(Vertex2dRgbaUv);
 
 /// Vertex with 3D position and 3-channel color.
 #[repr(C)]
@@ -457,23 +477,9 @@ impl BasicVertex for Vertex3dRgbUv {
     }
 }
 
-impl BasicVertex3d for Vertex3dRgbUv {
-    fn position(&self) -> glam::Vec3 {
-        self.position
-    }
-}
-
-impl BasicVertexRgb for Vertex3dRgbUv {
-    fn color(&self) -> glam::Vec3 {
-        self.color
-    }
-}
-
-impl BasicVertexUv for Vertex3dRgbUv {
-    fn uv(&self) -> glam::Vec2 {
-        self.uv
-    }
-}
+impl_3d!(Vertex3dRgbUv);
+impl_rgb!(Vertex3dRgbUv);
+impl_uv!(Vertex3dRgbUv);
 
 /// Vertex with 3D position and 4-channel color.
 #[repr(C)]
@@ -510,20 +516,6 @@ impl BasicVertex for Vertex3dRgbaUv {
     }
 }
 
-impl BasicVertex3d for Vertex3dRgbaUv {
-    fn position(&self) -> glam::Vec3 {
-        self.position
-    }
-}
-
-impl BasicVertexRgba for Vertex3dRgbaUv {
-    fn color(&self) -> glam::Vec4 {
-        self.color
-    }
-}
-
-impl BasicVertexUv for Vertex3dRgbaUv {
-    fn uv(&self) -> glam::Vec2 {
-        self.uv
-    }
-}
+impl_3d!(Vertex3dRgbaUv);
+impl_rgba!(Vertex3dRgbaUv);
+impl_uv!(Vertex3dRgbaUv);
