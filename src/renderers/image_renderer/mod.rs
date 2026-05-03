@@ -104,24 +104,23 @@ impl ImageRenderer {
         // Correct aspect ratio
         let viewport = {
             let texture_size = self.texture_view.texture().size();
+            let texture_size = glam::vec2(texture_size.width as f32, texture_size.height as f32);
 
-            let viewport_aspect = viewport.width / viewport.height;
-            let texture_aspect = texture_size.width as f32 / texture_size.height as f32;
+            let viewport_aspect = viewport.aspect_ratio();
+            let texture_aspect = texture_size.x / texture_size.y;
 
             let viewport = if viewport_aspect > texture_aspect {
-                let scale = viewport.height / texture_size.height as f32;
-                let w = texture_size.width as f32 * scale;
-                let h = texture_size.height as f32 * scale;
-                let x = viewport.x + (viewport.width - w) / 2.0;
-                let y = viewport.y;
-                Viewport::new(x, y, w, h)
+                let scale = viewport.size.y / texture_size.y;
+                let size = texture_size * scale;
+                let mut offset = viewport.offset;
+                offset.x += (viewport.size.x - size.x) / 2.0;
+                Viewport::new(offset, size)
             } else {
-                let scale = viewport.width / texture_size.width as f32;
-                let w = texture_size.width as f32 * scale;
-                let h = texture_size.height as f32 * scale;
-                let x = viewport.x;
-                let y = viewport.y + (viewport.height - h) / 2.0;
-                Viewport::new(x, y, w, h)
+                let scale = viewport.size.x / texture_size.y;
+                let size = texture_size * scale;
+                let mut offset = viewport.offset;
+                offset.y += (viewport.size.y - size.y) / 2.0;
+                Viewport::new(offset, size)
             };
 
             viewport

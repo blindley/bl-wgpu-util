@@ -321,14 +321,7 @@ impl BasicRenderer {
                 return;
             }
 
-            render_pass.set_viewport(
-                viewport.x,
-                viewport.y,
-                viewport.width,
-                viewport.height,
-                0.0,
-                1.0,
-            );
+            viewport.apply(&mut render_pass);
         }
 
         if let Some(uniform_data) = self.uniform_data.as_ref() {
