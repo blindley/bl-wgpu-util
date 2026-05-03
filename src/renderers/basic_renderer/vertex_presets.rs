@@ -1,6 +1,8 @@
 use super::{DynamicVertexDescriptor, DynamicVertexDescriptorBuilder};
 use wgpu::VertexFormat::*;
 
+use glam::{Vec2, Vec3, Vec4, vec2, vec3};
+
 macro_rules! offset_of {
     ($field:ident) => {
         Some(::std::mem::offset_of!(Self, $field) as _)
@@ -13,89 +15,142 @@ pub trait BasicVertex {
 }
 
 pub trait BasicVertex2d {
-    fn position(&self) -> glam::Vec2;
-    fn position_mut(&mut self) -> &mut glam::Vec2;
+    fn position(&self) -> Vec2;
+    fn position_mut(&mut self) -> &mut Vec2;
 
-    fn translate(&mut self, offset: impl Into<glam::Vec2>) {
-        *self.position_mut() += offset.into();
+    fn translate(&mut self, offset: Vec2) {
+        *self.position_mut() += offset;
     }
 
-    fn scale(&mut self, scale: impl Into<f32>) {
-        *self.position_mut() *= scale.into();
+    fn scale(&mut self, scale: f32) {
+        *self.position_mut() *= scale;
     }
 
-    fn non_uniform_scale(&mut self, scale: impl Into<glam::Vec2>) {
-        *self.position_mut() *= scale.into();
+    fn non_uniform_scale(&mut self, scale: Vec2) {
+        *self.position_mut() *= scale;
     }
 
     fn transform(&mut self, mat: &glam::Mat4) {
         let position = mat * self.position().extend(0.0).extend(1.0);
-        *self.position_mut() = glam::Vec2::new(position.x / position.w, position.y / position.w);
+        *self.position_mut() = Vec2::new(position.x / position.w, position.y / position.w);
     }
 
     /// Creates a rectangle of 2-d vertices from the given vertex and its opposite corner.
     ///
     /// ## Requirement
     /// `out.len() >= 6`
-    fn make_rect(&self, other: glam::Vec2, out: &mut [Self])
+    fn make_rect(out: &mut [Self], v0: Vec2, v1: Vec2)
     where
-        Self: Clone,
+        Self: Sized,
     {
         assert!(out.len() >= 6);
-        out[0] = self.clone();
-        out[1] = self.clone();
-        out[2] = self.clone();
-        out[3] = self.clone();
-        out[4] = self.clone();
-        out[5] = self.clone();
 
-        out[1].position_mut().y = other.y;
-        *out[2].position_mut() = other;
-
-        *out[4].position_mut() = other;
-        out[5].position_mut().x = other.x;
+        *out[0].position_mut() = v0;
+        *out[1].position_mut() = vec2(v1.x, v0.y);
+        *out[2].position_mut() = v1;
+        *out[3].position_mut() = v0;
+        *out[4].position_mut() = v1;
+        *out[5].position_mut() = vec2(v0.x, v1.y);
     }
 }
 
 pub trait BasicVertex3d {
-    fn position(&self) -> glam::Vec3;
-    fn position_mut(&mut self) -> &mut glam::Vec3;
+    fn position(&self) -> Vec3;
+    fn position_mut(&mut self) -> &mut Vec3;
 
-    fn translate(&mut self, offset: impl Into<glam::Vec3>) {
-        *self.position_mut() += offset.into();
+    fn translate(&mut self, offset: Vec3) {
+        *self.position_mut() += offset;
     }
 
-    fn scale(&mut self, scale: impl Into<f32>) {
-        *self.position_mut() *= scale.into();
+    fn scale(&mut self, scale: f32) {
+        *self.position_mut() *= scale;
     }
 
-    fn non_uniform_scale(&mut self, scale: impl Into<glam::Vec3>) {
-        *self.position_mut() *= scale.into();
+    fn non_uniform_scale(&mut self, scale: Vec3) {
+        *self.position_mut() *= scale;
     }
 
     fn transform(&mut self, mat: &glam::Mat4) {
         let position = mat * self.position().extend(1.0);
-        *self.position_mut() = glam::Vec3::new(
+        *self.position_mut() = Vec3::new(
             position.x / position.w,
             position.y / position.w,
             position.z / position.w,
         );
     }
+
+    /// Creates a cube of 3-d vertices from two opposite corners.
+    ///
+    /// ## Requirement
+    /// `out.len() >= 36`
+    fn make_box(out: &mut [Self], v0: Vec3, v1: Vec3)
+    where
+        Self: Sized,
+    {
+        assert!(out.len() >= 36);
+
+        let vertices = [
+            v0,
+            vec3(v1.x, v0.y, v0.z),
+            vec3(v0.x, v1.y, v0.z),
+            vec3(v1.x, v1.y, v0.z),
+            vec3(v0.x, v0.y, v1.z),
+            vec3(v1.x, v0.y, v1.z),
+            vec3(v0.x, v1.y, v1.z),
+            v1,
+        ];
+
+        //     6-------7
+        //    /|      /|
+        //   / |     / |
+        //  2-------3  |
+        //  |  4----|--5
+        //  | /     | /
+        //  |/      |/
+        //  0-------1
+
+        // Sides:
+        // front    right   back    left
+        //  2---3   3---7   7---6   6---2
+        //  |   |   |   |   |   |   |   |
+        //  |   |   |   |   |   |   |   |
+        //  0---1   1---5   5---4   4---0
+
+        // Bottom/Top:
+        //  0---1   6---7
+        //  |   |   |   |
+        //  |   |   |   |
+        //  4---5   2---3
+
+        #[rustfmt::skip]
+        const INDICES: [usize; 36] = [
+            0, 1, 3, 0, 3, 2, // front
+            1, 5, 7, 1, 7, 3, // right
+            5, 4, 6, 5, 6, 7, // back
+            4, 0, 2, 4, 2, 6, // left
+            4, 5, 1, 4, 1, 0, // bottom
+            2, 3, 7, 2, 7, 6, // top
+        ];
+
+        for (out_v, i) in out.iter_mut().zip(INDICES.iter()) {
+            *out_v.position_mut() = vertices[*i];
+        }
+    }
 }
 
 pub trait BasicVertexRgb {
-    fn color(&self) -> glam::Vec3;
-    fn color_mut(&mut self) -> &mut glam::Vec3;
+    fn color(&self) -> Vec3;
+    fn color_mut(&mut self) -> &mut Vec3;
 }
 
 pub trait BasicVertexRgba {
-    fn color(&self) -> glam::Vec4;
-    fn color_mut(&mut self) -> &mut glam::Vec4;
+    fn color(&self) -> Vec4;
+    fn color_mut(&mut self) -> &mut Vec4;
 }
 
 pub trait BasicVertexUv {
-    fn uv(&self) -> glam::Vec2;
-    fn uv_mut(&mut self) -> &mut glam::Vec2;
+    fn uv(&self) -> Vec2;
+    fn uv_mut(&mut self) -> &mut Vec2;
 }
 
 macro_rules! impl_accessor_trait {
@@ -114,46 +169,61 @@ macro_rules! impl_accessor_trait {
 
 macro_rules! impl_2d {
     ($type:ty) => {
-        impl_accessor_trait!($type, BasicVertex2d, position, position_mut, glam::Vec2);
+        impl_accessor_trait!($type, BasicVertex2d, position, position_mut, Vec2);
     };
 }
 
 macro_rules! impl_3d {
     ($type:ty) => {
-        impl_accessor_trait!($type, BasicVertex3d, position, position_mut, glam::Vec3);
+        impl_accessor_trait!($type, BasicVertex3d, position, position_mut, Vec3);
     };
 }
 
 macro_rules! impl_rgb {
     ($type:ty) => {
-        impl_accessor_trait!($type, BasicVertexRgb, color, color_mut, glam::Vec3);
+        impl_accessor_trait!($type, BasicVertexRgb, color, color_mut, Vec3);
     };
 }
 
 macro_rules! impl_rgba {
     ($type:ty) => {
-        impl_accessor_trait!($type, BasicVertexRgba, color, color_mut, glam::Vec4);
+        impl_accessor_trait!($type, BasicVertexRgba, color, color_mut, Vec4);
     };
 }
 
 macro_rules! impl_uv {
     ($type:ty) => {
-        impl_accessor_trait!($type, BasicVertexUv, uv, uv_mut, glam::Vec2);
+        impl_accessor_trait!($type, BasicVertexUv, uv, uv_mut, Vec2);
     };
 }
 
-/// Vertex with 2D position.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex2d {
-    pub position: glam::Vec2,
+macro_rules! pod_vertex {
+    (
+        $(#[$meta:meta])*
+        $vis:vis struct $name:ident {
+            $($field_vis:vis $field:ident : $ty:ty),*
+            $(,)?
+        }
+    ) => {
+        #[repr(C)]
+        #[derive(Debug, Clone, Copy, PartialEq, Default, bytemuck::Pod, bytemuck::Zeroable)]
+        $(#[$meta])*
+        $vis struct $name {
+            $($field_vis $field: $ty),*
+        }
+    };
 }
 
+pod_vertex!(
+    /// Vertex with 2D position.
+    pub struct Vertex2d {
+        pub position: Vec2,
+    }
+);
+
 impl Vertex2d {
-    pub fn new(position: impl Into<glam::Vec2>) -> Self {
-        Self {
-            position: position.into(),
-        }
+    pub fn new(position: Vec2) -> Self {
+        Self { position }
     }
 }
 
@@ -167,18 +237,16 @@ impl BasicVertex for Vertex2d {
 
 impl_2d!(Vertex2d);
 
-/// Vertex with 3D position.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex3d {
-    pub position: glam::Vec3,
-}
+pod_vertex!(
+    /// Vertex with 3D position.
+    pub struct Vertex3d {
+        pub position: Vec3,
+    }
+);
 
 impl Vertex3d {
-    pub fn new(position: impl Into<glam::Vec3>) -> Self {
-        Self {
-            position: position.into(),
-        }
+    pub fn new(position: Vec3) -> Self {
+        Self { position }
     }
 }
 
@@ -192,20 +260,17 @@ impl BasicVertex for Vertex3d {
 
 impl_3d!(Vertex3d);
 
-/// Vertex with 2D position and 3-channel color.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex2dRgb {
-    pub position: glam::Vec2,
-    pub color: glam::Vec3,
-}
+pod_vertex!(
+    /// Vertex with 2D position and 3-channel color.
+    pub struct Vertex2dRgb {
+        pub position: Vec2,
+        pub color: Vec3,
+    }
+);
 
 impl Vertex2dRgb {
-    pub fn new(position: impl Into<glam::Vec2>, color: impl Into<glam::Vec3>) -> Self {
-        Self {
-            position: position.into(),
-            color: color.into(),
-        }
+    pub fn new(position: Vec2, color: Vec3) -> Self {
+        Self { position, color }
     }
 }
 
@@ -221,20 +286,20 @@ impl BasicVertex for Vertex2dRgb {
 impl_2d!(Vertex2dRgb);
 impl_rgb!(Vertex2dRgb);
 
-/// Vertex with 2D position and 4-channel color.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex2dRgba {
-    pub position: glam::Vec2,
-    _pad: [u32; 2],
-    pub color: glam::Vec4,
-}
+pod_vertex!(
+    /// Vertex with 2D position and 4-channel color.
+    pub struct Vertex2dRgba {
+        pub position: Vec2,
+        _pad: [u32; 2],
+        pub color: Vec4,
+    }
+);
 
 impl Vertex2dRgba {
-    pub fn new(position: impl Into<glam::Vec2>, color: impl Into<glam::Vec4>) -> Self {
+    pub fn new(position: Vec2, color: Vec4) -> Self {
         Self {
-            position: position.into(),
-            color: color.into(),
+            position,
+            color,
             _pad: [0; 2],
         }
     }
@@ -252,20 +317,17 @@ impl BasicVertex for Vertex2dRgba {
 impl_2d!(Vertex2dRgba);
 impl_rgba!(Vertex2dRgba);
 
-/// Vertex with 3D position and 3-channel color.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex3dRgb {
-    pub position: glam::Vec3,
-    pub color: glam::Vec3,
-}
+pod_vertex!(
+    /// Vertex with 3D position and 3-channel color.
+    pub struct Vertex3dRgb {
+        pub position: Vec3,
+        pub color: Vec3,
+    }
+);
 
 impl Vertex3dRgb {
-    pub fn new(position: impl Into<glam::Vec3>, color: impl Into<glam::Vec3>) -> Self {
-        Self {
-            position: position.into(),
-            color: color.into(),
-        }
+    pub fn new(position: Vec3, color: Vec3) -> Self {
+        Self { position, color }
     }
 }
 
@@ -281,20 +343,20 @@ impl BasicVertex for Vertex3dRgb {
 impl_3d!(Vertex3dRgb);
 impl_rgb!(Vertex3dRgb);
 
-/// Vertex with 3D position and 4-channel color.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex3dRgba {
-    pub position: glam::Vec3,
-    _pad: [u32; 1],
-    pub color: glam::Vec4,
-}
+pod_vertex!(
+    /// Vertex with 3D position and 4-channel color.
+    pub struct Vertex3dRgba {
+        pub position: Vec3,
+        _pad: [u32; 1],
+        pub color: Vec4,
+    }
+);
 
 impl Vertex3dRgba {
-    pub fn new(position: impl Into<glam::Vec3>, color: impl Into<glam::Vec4>) -> Self {
+    pub fn new(position: Vec3, color: Vec4) -> Self {
         Self {
-            position: position.into(),
-            color: color.into(),
+            position,
+            color,
             _pad: [0; 1],
         }
     }
@@ -312,20 +374,17 @@ impl BasicVertex for Vertex3dRgba {
 impl_3d!(Vertex3dRgba);
 impl_rgba!(Vertex3dRgba);
 
-/// Vertex with 2D position and 2-channel texture coordinate.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex2dUv {
-    pub position: glam::Vec2,
-    pub uv: glam::Vec2,
-}
+pod_vertex!(
+    /// Vertex with 2D position and 2-channel texture coordinate.
+    pub struct Vertex2dUv {
+        pub position: Vec2,
+        pub uv: Vec2,
+    }
+);
 
 impl Vertex2dUv {
-    pub fn new(position: impl Into<glam::Vec2>, uv: impl Into<glam::Vec2>) -> Self {
-        Self {
-            position: position.into(),
-            uv: uv.into(),
-        }
+    pub fn new(position: Vec2, uv: Vec2) -> Self {
+        Self { position, uv }
     }
 }
 
@@ -341,20 +400,17 @@ impl BasicVertex for Vertex2dUv {
 impl_2d!(Vertex2dUv);
 impl_uv!(Vertex2dUv);
 
-/// Vertex with 3D position.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex3dUv {
-    pub position: glam::Vec3,
-    pub uv: glam::Vec2,
-}
+pod_vertex!(
+    /// Vertex with 3D position.
+    pub struct Vertex3dUv {
+        pub position: Vec3,
+        pub uv: Vec2,
+    }
+);
 
 impl Vertex3dUv {
-    pub fn new(position: impl Into<glam::Vec3>, uv: impl Into<glam::Vec2>) -> Self {
-        Self {
-            position: position.into(),
-            uv: uv.into(),
-        }
+    pub fn new(position: Vec3, uv: Vec2) -> Self {
+        Self { position, uv }
     }
 }
 
@@ -370,25 +426,21 @@ impl BasicVertex for Vertex3dUv {
 impl_3d!(Vertex3dUv);
 impl_uv!(Vertex3dUv);
 
-/// Vertex with 2D position and 3-channel color.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex2dRgbUv {
-    pub position: glam::Vec2,
-    pub color: glam::Vec3,
-    pub uv: glam::Vec2,
-}
+pod_vertex!(
+    /// Vertex with 2D position and 3-channel color.
+    pub struct Vertex2dRgbUv {
+        pub position: Vec2,
+        pub color: Vec3,
+        pub uv: Vec2,
+    }
+);
 
 impl Vertex2dRgbUv {
-    pub fn new(
-        position: impl Into<glam::Vec2>,
-        color: impl Into<glam::Vec3>,
-        uv: impl Into<glam::Vec2>,
-    ) -> Self {
+    pub fn new(position: Vec2, color: Vec3, uv: Vec2) -> Self {
         Self {
-            position: position.into(),
-            color: color.into(),
-            uv: uv.into(),
+            position,
+            color,
+            uv,
         }
     }
 }
@@ -407,25 +459,21 @@ impl_2d!(Vertex2dRgbUv);
 impl_rgb!(Vertex2dRgbUv);
 impl_uv!(Vertex2dRgbUv);
 
-/// Vertex with 2D position and 4-channel color.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex2dRgbaUv {
-    pub position: glam::Vec2,
-    pub uv: glam::Vec2,
-    pub color: glam::Vec4,
-}
+pod_vertex!(
+    /// Vertex with 2D position and 4-channel color.
+    pub struct Vertex2dRgbaUv {
+        pub position: Vec2,
+        pub uv: Vec2,
+        pub color: Vec4,
+    }
+);
 
 impl Vertex2dRgbaUv {
-    pub fn new(
-        position: impl Into<glam::Vec2>,
-        color: impl Into<glam::Vec4>,
-        uv: impl Into<glam::Vec2>,
-    ) -> Self {
+    pub fn new(position: Vec2, color: Vec4, uv: Vec2) -> Self {
         Self {
-            position: position.into(),
-            color: color.into(),
-            uv: uv.into(),
+            position,
+            color,
+            uv,
         }
     }
 }
@@ -444,25 +492,21 @@ impl_2d!(Vertex2dRgbaUv);
 impl_rgba!(Vertex2dRgbaUv);
 impl_uv!(Vertex2dRgbaUv);
 
-/// Vertex with 3D position and 3-channel color.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex3dRgbUv {
-    pub position: glam::Vec3,
-    pub color: glam::Vec3,
-    pub uv: glam::Vec2,
-}
+pod_vertex!(
+    /// Vertex with 3D position and 3-channel color.
+    pub struct Vertex3dRgbUv {
+        pub position: Vec3,
+        pub color: Vec3,
+        pub uv: Vec2,
+    }
+);
 
 impl Vertex3dRgbUv {
-    pub fn new(
-        position: impl Into<glam::Vec3>,
-        color: impl Into<glam::Vec3>,
-        uv: impl Into<glam::Vec2>,
-    ) -> Self {
+    pub fn new(position: Vec3, color: Vec3, uv: Vec2) -> Self {
         Self {
-            position: position.into(),
-            color: color.into(),
-            uv: uv.into(),
+            position,
+            color,
+            uv,
         }
     }
 }
@@ -481,26 +525,22 @@ impl_3d!(Vertex3dRgbUv);
 impl_rgb!(Vertex3dRgbUv);
 impl_uv!(Vertex3dRgbUv);
 
-/// Vertex with 3D position and 4-channel color.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex3dRgbaUv {
-    pub position: glam::Vec3,
-    pub uv: glam::Vec2,
-    _pad: [u32; 3],
-    pub color: glam::Vec4,
-}
+pod_vertex!(
+    /// Vertex with 3D position and 4-channel color.
+    pub struct Vertex3dRgbaUv {
+        pub position: Vec3,
+        pub uv: Vec2,
+        _pad: [u32; 3],
+        pub color: Vec4,
+    }
+);
 
 impl Vertex3dRgbaUv {
-    pub fn new(
-        position: impl Into<glam::Vec3>,
-        color: impl Into<glam::Vec4>,
-        uv: impl Into<glam::Vec2>,
-    ) -> Self {
+    pub fn new(position: Vec3, color: Vec4, uv: Vec2) -> Self {
         Self {
-            position: position.into(),
-            color: color.into(),
-            uv: uv.into(),
+            position,
+            color,
+            uv,
             _pad: [0; 3],
         }
     }
