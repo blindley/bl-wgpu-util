@@ -153,6 +153,337 @@ pub trait BasicVertexUv {
     fn uv_mut(&mut self) -> &mut Vec2;
 }
 
+macro_rules! pod_vertex {
+    (
+        $(#[$meta:meta])*
+        $vis:vis struct $name:ident {
+            $($field_vis:vis $field:ident : $ty:ty),*
+            $(,)?
+        }
+    ) => {
+        #[repr(C)]
+        #[derive(Debug, Clone, Copy, PartialEq, Default, bytemuck::Pod, bytemuck::Zeroable)]
+        $(#[$meta])*
+        $vis struct $name {
+            $($field_vis $field: $ty),*
+        }
+    };
+}
+
+pod_vertex!(
+    /// Vertex with 2D position.
+    pub struct Vertex2d {
+        pub position: Vec2,
+    }
+);
+
+impl Vertex2d {
+    pub fn new(position: Vec2) -> Self {
+        Self { position }
+    }
+}
+
+impl BasicVertex for Vertex2d {
+    fn format() -> DynamicVertexDescriptor {
+        DynamicVertexDescriptorBuilder::new()
+            .with_attribute("position", Float32x2, offset_of!(position))
+            .build()
+    }
+}
+
+pod_vertex!(
+    /// Vertex with 3D position.
+    pub struct Vertex3d {
+        pub position: Vec3,
+    }
+);
+
+impl Vertex3d {
+    pub fn new(position: Vec3) -> Self {
+        Self { position }
+    }
+}
+
+impl BasicVertex for Vertex3d {
+    fn format() -> DynamicVertexDescriptor {
+        DynamicVertexDescriptorBuilder::new()
+            .with_attribute("position", Float32x3, offset_of!(position))
+            .build()
+    }
+}
+
+pod_vertex!(
+    /// Vertex with 2D position and 3-channel color.
+    pub struct Vertex2dRgb {
+        pub position: Vec2,
+        pub color: Vec3,
+    }
+);
+
+impl Vertex2dRgb {
+    pub fn new(position: Vec2, color: Vec3) -> Self {
+        Self { position, color }
+    }
+}
+
+impl BasicVertex for Vertex2dRgb {
+    fn format() -> DynamicVertexDescriptor {
+        DynamicVertexDescriptorBuilder::new()
+            .with_attribute("position", Float32x2, offset_of!(position))
+            .with_attribute("color", Float32x3, offset_of!(color))
+            .build()
+    }
+}
+
+pod_vertex!(
+    /// Vertex with 2D position and 4-channel color.
+    pub struct Vertex2dRgba {
+        pub position: Vec2,
+        _pad: [u32; 2],
+        pub color: Vec4,
+    }
+);
+
+impl Vertex2dRgba {
+    pub fn new(position: Vec2, color: Vec4) -> Self {
+        Self {
+            position,
+            color,
+            _pad: [0; 2],
+        }
+    }
+}
+
+impl BasicVertex for Vertex2dRgba {
+    fn format() -> DynamicVertexDescriptor {
+        DynamicVertexDescriptorBuilder::new()
+            .with_attribute("position", Float32x2, offset_of!(position))
+            .with_attribute("color", Float32x4, offset_of!(color))
+            .build()
+    }
+}
+
+pod_vertex!(
+    /// Vertex with 3D position and 3-channel color.
+    pub struct Vertex3dRgb {
+        pub position: Vec3,
+        pub color: Vec3,
+    }
+);
+
+impl Vertex3dRgb {
+    pub fn new(position: Vec3, color: Vec3) -> Self {
+        Self { position, color }
+    }
+}
+
+impl BasicVertex for Vertex3dRgb {
+    fn format() -> DynamicVertexDescriptor {
+        DynamicVertexDescriptorBuilder::new()
+            .with_attribute("position", Float32x3, offset_of!(position))
+            .with_attribute("color", Float32x3, offset_of!(color))
+            .build()
+    }
+}
+
+pod_vertex!(
+    /// Vertex with 3D position and 4-channel color.
+    pub struct Vertex3dRgba {
+        pub position: Vec3,
+        _pad: [u32; 1],
+        pub color: Vec4,
+    }
+);
+
+impl Vertex3dRgba {
+    pub fn new(position: Vec3, color: Vec4) -> Self {
+        Self {
+            position,
+            color,
+            _pad: [0; 1],
+        }
+    }
+}
+
+impl BasicVertex for Vertex3dRgba {
+    fn format() -> DynamicVertexDescriptor {
+        DynamicVertexDescriptorBuilder::new()
+            .with_attribute("position", Float32x3, offset_of!(position))
+            .with_attribute("color", Float32x4, offset_of!(color))
+            .build()
+    }
+}
+
+pod_vertex!(
+    /// Vertex with 2D position and uv coordinates.
+    pub struct Vertex2dUv {
+        pub position: Vec2,
+        pub uv: Vec2,
+    }
+);
+
+impl Vertex2dUv {
+    pub fn new(position: Vec2, uv: Vec2) -> Self {
+        Self { position, uv }
+    }
+}
+
+impl BasicVertex for Vertex2dUv {
+    fn format() -> DynamicVertexDescriptor {
+        DynamicVertexDescriptorBuilder::new()
+            .with_attribute("position", Float32x2, offset_of!(position))
+            .with_attribute("uv", Float32x2, offset_of!(uv))
+            .build()
+    }
+}
+
+pod_vertex!(
+    /// Vertex with 3D position and uv coordinates.
+    pub struct Vertex3dUv {
+        pub position: Vec3,
+        pub uv: Vec2,
+    }
+);
+
+impl Vertex3dUv {
+    pub fn new(position: Vec3, uv: Vec2) -> Self {
+        Self { position, uv }
+    }
+}
+
+impl BasicVertex for Vertex3dUv {
+    fn format() -> DynamicVertexDescriptor {
+        DynamicVertexDescriptorBuilder::new()
+            .with_attribute("position", Float32x3, offset_of!(position))
+            .with_attribute("uv", Float32x2, offset_of!(uv))
+            .build()
+    }
+}
+
+pod_vertex!(
+    /// Vertex with 2D position, 3-channel color and uv coordinates.
+    pub struct Vertex2dRgbUv {
+        pub position: Vec2,
+        pub color: Vec3,
+        pub uv: Vec2,
+    }
+);
+
+impl Vertex2dRgbUv {
+    pub fn new(position: Vec2, color: Vec3, uv: Vec2) -> Self {
+        Self {
+            position,
+            color,
+            uv,
+        }
+    }
+}
+
+impl BasicVertex for Vertex2dRgbUv {
+    fn format() -> DynamicVertexDescriptor {
+        DynamicVertexDescriptorBuilder::new()
+            .with_attribute("position", Float32x2, offset_of!(position))
+            .with_attribute("color", Float32x3, offset_of!(color))
+            .with_attribute("uv", Float32x2, offset_of!(uv))
+            .build()
+    }
+}
+
+pod_vertex!(
+    /// Vertex with 2D position, 4-channel color and uv coordinates.
+    pub struct Vertex2dRgbaUv {
+        pub position: Vec2,
+        pub uv: Vec2,
+        pub color: Vec4,
+    }
+);
+
+impl Vertex2dRgbaUv {
+    pub fn new(position: Vec2, color: Vec4, uv: Vec2) -> Self {
+        Self {
+            position,
+            color,
+            uv,
+        }
+    }
+}
+
+impl BasicVertex for Vertex2dRgbaUv {
+    fn format() -> DynamicVertexDescriptor {
+        DynamicVertexDescriptorBuilder::new()
+            .with_attribute("position", Float32x2, offset_of!(position))
+            .with_attribute("color", Float32x4, offset_of!(color))
+            .with_attribute("uv", Float32x2, offset_of!(uv))
+            .build()
+    }
+}
+
+pod_vertex!(
+    /// Vertex with 3D position, 3-channel color and uv coordinates.
+    pub struct Vertex3dRgbUv {
+        pub position: Vec3,
+        pub color: Vec3,
+        pub uv: Vec2,
+    }
+);
+
+impl Vertex3dRgbUv {
+    pub fn new(position: Vec3, color: Vec3, uv: Vec2) -> Self {
+        Self {
+            position,
+            color,
+            uv,
+        }
+    }
+}
+
+impl BasicVertex for Vertex3dRgbUv {
+    fn format() -> DynamicVertexDescriptor {
+        DynamicVertexDescriptorBuilder::new()
+            .with_attribute("position", Float32x3, offset_of!(position))
+            .with_attribute("color", Float32x3, offset_of!(color))
+            .with_attribute("uv", Float32x2, offset_of!(uv))
+            .build()
+    }
+}
+
+pod_vertex!(
+    /// Vertex with 3D position, 4-channel color and uv coordinates.
+    pub struct Vertex3dRgbaUv {
+        pub position: Vec3,
+        pub uv: Vec2,
+        _pad: [u32; 3],
+        pub color: Vec4,
+    }
+);
+
+impl Vertex3dRgbaUv {
+    pub fn new(position: Vec3, color: Vec4, uv: Vec2) -> Self {
+        Self {
+            position,
+            color,
+            uv,
+            _pad: [0; 3],
+        }
+    }
+}
+
+impl BasicVertex for Vertex3dRgbaUv {
+    fn format() -> DynamicVertexDescriptor {
+        DynamicVertexDescriptorBuilder::new()
+            .with_attribute("position", Float32x3, offset_of!(position))
+            .with_attribute("color", Float32x4, offset_of!(color))
+            .with_attribute("uv", Float32x2, offset_of!(uv))
+            .build()
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Vertex Trait Macro Based Implementations
+////////////////////////////////////////////////////////////////////////////////
+///
+///
+
 macro_rules! impl_accessor_trait {
     ($type:ty, $trait:ty, $field:ident, $mut_accessor:ident, $ret:ty) => {
         impl $trait for $type {
@@ -197,364 +528,39 @@ macro_rules! impl_uv {
     };
 }
 
-macro_rules! pod_vertex {
-    (
-        $(#[$meta:meta])*
-        $vis:vis struct $name:ident {
-            $($field_vis:vis $field:ident : $ty:ty),*
-            $(,)?
-        }
-    ) => {
-        #[repr(C)]
-        #[derive(Debug, Clone, Copy, PartialEq, Default, bytemuck::Pod, bytemuck::Zeroable)]
-        $(#[$meta])*
-        $vis struct $name {
-            $($field_vis $field: $ty),*
-        }
-    };
-}
-
-pod_vertex!(
-    /// Vertex with 2D position.
-    pub struct Vertex2d {
-        pub position: Vec2,
-    }
-);
-
-impl Vertex2d {
-    pub fn new(position: Vec2) -> Self {
-        Self { position }
-    }
-}
-
-impl BasicVertex for Vertex2d {
-    fn format() -> DynamicVertexDescriptor {
-        DynamicVertexDescriptorBuilder::new()
-            .with_attribute("position", Float32x2, offset_of!(position))
-            .build()
-    }
-}
-
 impl_2d!(Vertex2d);
 
-pod_vertex!(
-    /// Vertex with 3D position.
-    pub struct Vertex3d {
-        pub position: Vec3,
-    }
-);
-
-impl Vertex3d {
-    pub fn new(position: Vec3) -> Self {
-        Self { position }
-    }
-}
-
-impl BasicVertex for Vertex3d {
-    fn format() -> DynamicVertexDescriptor {
-        DynamicVertexDescriptorBuilder::new()
-            .with_attribute("position", Float32x3, offset_of!(position))
-            .build()
-    }
-}
-
 impl_3d!(Vertex3d);
-
-pod_vertex!(
-    /// Vertex with 2D position and 3-channel color.
-    pub struct Vertex2dRgb {
-        pub position: Vec2,
-        pub color: Vec3,
-    }
-);
-
-impl Vertex2dRgb {
-    pub fn new(position: Vec2, color: Vec3) -> Self {
-        Self { position, color }
-    }
-}
-
-impl BasicVertex for Vertex2dRgb {
-    fn format() -> DynamicVertexDescriptor {
-        DynamicVertexDescriptorBuilder::new()
-            .with_attribute("position", Float32x2, offset_of!(position))
-            .with_attribute("color", Float32x3, offset_of!(color))
-            .build()
-    }
-}
 
 impl_2d!(Vertex2dRgb);
 impl_rgb!(Vertex2dRgb);
 
-pod_vertex!(
-    /// Vertex with 2D position and 4-channel color.
-    pub struct Vertex2dRgba {
-        pub position: Vec2,
-        _pad: [u32; 2],
-        pub color: Vec4,
-    }
-);
-
-impl Vertex2dRgba {
-    pub fn new(position: Vec2, color: Vec4) -> Self {
-        Self {
-            position,
-            color,
-            _pad: [0; 2],
-        }
-    }
-}
-
-impl BasicVertex for Vertex2dRgba {
-    fn format() -> DynamicVertexDescriptor {
-        DynamicVertexDescriptorBuilder::new()
-            .with_attribute("position", Float32x2, offset_of!(position))
-            .with_attribute("color", Float32x4, offset_of!(color))
-            .build()
-    }
-}
-
 impl_2d!(Vertex2dRgba);
 impl_rgba!(Vertex2dRgba);
-
-pod_vertex!(
-    /// Vertex with 3D position and 3-channel color.
-    pub struct Vertex3dRgb {
-        pub position: Vec3,
-        pub color: Vec3,
-    }
-);
-
-impl Vertex3dRgb {
-    pub fn new(position: Vec3, color: Vec3) -> Self {
-        Self { position, color }
-    }
-}
-
-impl BasicVertex for Vertex3dRgb {
-    fn format() -> DynamicVertexDescriptor {
-        DynamicVertexDescriptorBuilder::new()
-            .with_attribute("position", Float32x3, offset_of!(position))
-            .with_attribute("color", Float32x3, offset_of!(color))
-            .build()
-    }
-}
 
 impl_3d!(Vertex3dRgb);
 impl_rgb!(Vertex3dRgb);
 
-pod_vertex!(
-    /// Vertex with 3D position and 4-channel color.
-    pub struct Vertex3dRgba {
-        pub position: Vec3,
-        _pad: [u32; 1],
-        pub color: Vec4,
-    }
-);
-
-impl Vertex3dRgba {
-    pub fn new(position: Vec3, color: Vec4) -> Self {
-        Self {
-            position,
-            color,
-            _pad: [0; 1],
-        }
-    }
-}
-
-impl BasicVertex for Vertex3dRgba {
-    fn format() -> DynamicVertexDescriptor {
-        DynamicVertexDescriptorBuilder::new()
-            .with_attribute("position", Float32x3, offset_of!(position))
-            .with_attribute("color", Float32x4, offset_of!(color))
-            .build()
-    }
-}
-
 impl_3d!(Vertex3dRgba);
 impl_rgba!(Vertex3dRgba);
-
-pod_vertex!(
-    /// Vertex with 2D position and 2-channel texture coordinate.
-    pub struct Vertex2dUv {
-        pub position: Vec2,
-        pub uv: Vec2,
-    }
-);
-
-impl Vertex2dUv {
-    pub fn new(position: Vec2, uv: Vec2) -> Self {
-        Self { position, uv }
-    }
-}
-
-impl BasicVertex for Vertex2dUv {
-    fn format() -> DynamicVertexDescriptor {
-        DynamicVertexDescriptorBuilder::new()
-            .with_attribute("position", Float32x2, offset_of!(position))
-            .with_attribute("uv", Float32x2, offset_of!(uv))
-            .build()
-    }
-}
 
 impl_2d!(Vertex2dUv);
 impl_uv!(Vertex2dUv);
 
-pod_vertex!(
-    /// Vertex with 3D position.
-    pub struct Vertex3dUv {
-        pub position: Vec3,
-        pub uv: Vec2,
-    }
-);
-
-impl Vertex3dUv {
-    pub fn new(position: Vec3, uv: Vec2) -> Self {
-        Self { position, uv }
-    }
-}
-
-impl BasicVertex for Vertex3dUv {
-    fn format() -> DynamicVertexDescriptor {
-        DynamicVertexDescriptorBuilder::new()
-            .with_attribute("position", Float32x3, offset_of!(position))
-            .with_attribute("uv", Float32x2, offset_of!(uv))
-            .build()
-    }
-}
-
 impl_3d!(Vertex3dUv);
 impl_uv!(Vertex3dUv);
-
-pod_vertex!(
-    /// Vertex with 2D position and 3-channel color.
-    pub struct Vertex2dRgbUv {
-        pub position: Vec2,
-        pub color: Vec3,
-        pub uv: Vec2,
-    }
-);
-
-impl Vertex2dRgbUv {
-    pub fn new(position: Vec2, color: Vec3, uv: Vec2) -> Self {
-        Self {
-            position,
-            color,
-            uv,
-        }
-    }
-}
-
-impl BasicVertex for Vertex2dRgbUv {
-    fn format() -> DynamicVertexDescriptor {
-        DynamicVertexDescriptorBuilder::new()
-            .with_attribute("position", Float32x2, offset_of!(position))
-            .with_attribute("color", Float32x3, offset_of!(color))
-            .with_attribute("uv", Float32x2, offset_of!(uv))
-            .build()
-    }
-}
 
 impl_2d!(Vertex2dRgbUv);
 impl_rgb!(Vertex2dRgbUv);
 impl_uv!(Vertex2dRgbUv);
 
-pod_vertex!(
-    /// Vertex with 2D position and 4-channel color.
-    pub struct Vertex2dRgbaUv {
-        pub position: Vec2,
-        pub uv: Vec2,
-        pub color: Vec4,
-    }
-);
-
-impl Vertex2dRgbaUv {
-    pub fn new(position: Vec2, color: Vec4, uv: Vec2) -> Self {
-        Self {
-            position,
-            color,
-            uv,
-        }
-    }
-}
-
-impl BasicVertex for Vertex2dRgbaUv {
-    fn format() -> DynamicVertexDescriptor {
-        DynamicVertexDescriptorBuilder::new()
-            .with_attribute("position", Float32x2, offset_of!(position))
-            .with_attribute("color", Float32x4, offset_of!(color))
-            .with_attribute("uv", Float32x2, offset_of!(uv))
-            .build()
-    }
-}
-
 impl_2d!(Vertex2dRgbaUv);
 impl_rgba!(Vertex2dRgbaUv);
 impl_uv!(Vertex2dRgbaUv);
 
-pod_vertex!(
-    /// Vertex with 3D position and 3-channel color.
-    pub struct Vertex3dRgbUv {
-        pub position: Vec3,
-        pub color: Vec3,
-        pub uv: Vec2,
-    }
-);
-
-impl Vertex3dRgbUv {
-    pub fn new(position: Vec3, color: Vec3, uv: Vec2) -> Self {
-        Self {
-            position,
-            color,
-            uv,
-        }
-    }
-}
-
-impl BasicVertex for Vertex3dRgbUv {
-    fn format() -> DynamicVertexDescriptor {
-        DynamicVertexDescriptorBuilder::new()
-            .with_attribute("position", Float32x3, offset_of!(position))
-            .with_attribute("color", Float32x3, offset_of!(color))
-            .with_attribute("uv", Float32x2, offset_of!(uv))
-            .build()
-    }
-}
-
 impl_3d!(Vertex3dRgbUv);
 impl_rgb!(Vertex3dRgbUv);
 impl_uv!(Vertex3dRgbUv);
-
-pod_vertex!(
-    /// Vertex with 3D position and 4-channel color.
-    pub struct Vertex3dRgbaUv {
-        pub position: Vec3,
-        pub uv: Vec2,
-        _pad: [u32; 3],
-        pub color: Vec4,
-    }
-);
-
-impl Vertex3dRgbaUv {
-    pub fn new(position: Vec3, color: Vec4, uv: Vec2) -> Self {
-        Self {
-            position,
-            color,
-            uv,
-            _pad: [0; 3],
-        }
-    }
-}
-
-impl BasicVertex for Vertex3dRgbaUv {
-    fn format() -> DynamicVertexDescriptor {
-        DynamicVertexDescriptorBuilder::new()
-            .with_attribute("position", Float32x3, offset_of!(position))
-            .with_attribute("color", Float32x4, offset_of!(color))
-            .with_attribute("uv", Float32x2, offset_of!(uv))
-            .build()
-    }
-}
 
 impl_3d!(Vertex3dRgbaUv);
 impl_rgba!(Vertex3dRgbaUv);
