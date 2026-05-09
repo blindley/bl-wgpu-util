@@ -269,6 +269,44 @@ impl BasicRenderer {
         }
     }
 
+    pub fn render_with_pass(
+        &self,
+        render_pass: &mut wgpu::RenderPass,
+        viewport: Option<Viewport>,
+        buffer: Option<&wgpu::Buffer>,
+        range: std::ops::Range<u32>,
+    ) {
+        render_pass.set_pipeline(&self.pipeline);
+        if let Some(viewport) = viewport {
+            if !viewport.area_is_positive() {
+                return;
+            }
+
+            viewport.apply(render_pass);
+        }
+
+        if let Some(uniform_data) = self.uniform_data.as_ref() {
+            render_pass.set_bind_group(UNIFORMS_BIND_GROUP_INDEX, uniform_data.bind_group(), &[]);
+        }
+
+        let mut draw = true;
+        if let Some(texture_data) = self.texture_data.as_ref() {
+            draw = false;
+            if let Some(bg) = texture_data.bind_group() {
+                render_pass.set_bind_group(TEXTURE_BIND_GROUP_INDEX, bg, &[]);
+                draw = true;
+            }
+        }
+
+        if let Some(buffer) = buffer {
+            render_pass.set_vertex_buffer(0, buffer.slice(..));
+        }
+
+        if draw {
+            render_pass.draw(range, 0..1);
+        }
+    }
+
     fn _render_impl(
         &self,
         encoder: &mut wgpu::CommandEncoder,
@@ -314,36 +352,7 @@ impl BasicRenderer {
             multiview_mask: None,
         });
 
-        render_pass.set_pipeline(&self.pipeline);
-
-        if let Some(viewport) = viewport {
-            if !viewport.area_is_positive() {
-                return;
-            }
-
-            viewport.apply(&mut render_pass);
-        }
-
-        if let Some(uniform_data) = self.uniform_data.as_ref() {
-            render_pass.set_bind_group(UNIFORMS_BIND_GROUP_INDEX, uniform_data.bind_group(), &[]);
-        }
-
-        let mut draw = true;
-        if let Some(texture_data) = self.texture_data.as_ref() {
-            draw = false;
-            if let Some(bg) = texture_data.bind_group() {
-                render_pass.set_bind_group(TEXTURE_BIND_GROUP_INDEX, bg, &[]);
-                draw = true;
-            }
-        }
-
-        if let Some(buffer) = buffer {
-            render_pass.set_vertex_buffer(0, buffer.slice(..));
-        }
-
-        if draw {
-            render_pass.draw(range, 0..1);
-        }
+        self.render_with_pass(&mut render_pass, viewport, buffer, range);
     }
 
     pub fn render_vertices(
@@ -376,6 +385,27 @@ impl BasicRenderer {
         );
     }
 
+    pub fn render_vertices_with_pass(
+        &self,
+        render_pass: &mut wgpu::RenderPass,
+        viewport: Option<Viewport>,
+        vertices: &[u8],
+    ) {
+        use wgpu::util::DeviceExt;
+
+        let buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: self._make_label("render_vertices.buffer").as_deref(),
+                contents: vertices,
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+
+        let vertex_count = vertices.len() / self.vertex_stride;
+
+        self.render_with_pass(render_pass, viewport, Some(&buffer), 0..vertex_count as u32);
+    }
+
     pub fn render_buffer_range(
         &self,
         encoder: &mut wgpu::CommandEncoder,
@@ -388,6 +418,16 @@ impl BasicRenderer {
         self._render_impl(encoder, view, depth_view, viewport, Some(buffer), range);
     }
 
+    pub fn render_buffer_range_with_pass(
+        &self,
+        render_pass: &mut wgpu::RenderPass,
+        viewport: Option<Viewport>,
+        buffer: &wgpu::Buffer,
+        range: std::ops::Range<u32>,
+    ) {
+        self.render_with_pass(render_pass, viewport, Some(buffer), range);
+    }
+
     pub fn render_bufferless(
         &self,
         encoder: &mut wgpu::CommandEncoder,
@@ -397,6 +437,15 @@ impl BasicRenderer {
         range: std::ops::Range<u32>,
     ) {
         self._render_impl(encoder, view, depth_view, viewport, None, range);
+    }
+
+    pub fn render_bufferless_with_pass(
+        &self,
+        render_pass: &mut wgpu::RenderPass,
+        viewport: Option<Viewport>,
+        range: std::ops::Range<u32>,
+    ) {
+        self.render_with_pass(render_pass, viewport, None, range);
     }
 
     pub fn update_uniforms<U: encase::ShaderType + encase::internal::WriteInto>(
