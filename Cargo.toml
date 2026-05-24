@@ -1,6 +1,6 @@
 [package]
 name = "bl-wgpu-util"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2024"
 description = "Personal utility library for wgpu applications: depth buffers, viewports, image/texture helpers, and a flexible renderer abstraction."
 license = "MIT OR Apache-2.0"
@@ -16,4 +16,4 @@ encase = "0.12.0"
 image = "0.25.10"
 wgpu = "29.0.1"
 half = { version = "2.7.1", features = ["bytemuck"] }
-glam = { version = "0.32.1", features = ["bytemuck", "encase"] }
+glam = { version = "0.33", features = ["bytemuck", "encase"] }
