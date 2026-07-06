@@ -27,6 +27,13 @@ impl Image {
         })
     }
 
+    pub fn save<P: AsRef<std::path::Path>>(&self, path: P) -> anyhow::Result<()> {
+        let img = image::RgbaImage::from_raw(self.width, self.height, self.data.clone())
+            .ok_or(anyhow::anyhow!("Failed to create image from raw data"))?;
+        img.save(path)?;
+        Ok(())
+    }
+
     pub fn load_from_bytes<P: AsRef<[u8]>>(bytes: P) -> anyhow::Result<Self> {
         let img = image::load_from_memory(bytes.as_ref())?;
         let img = img.to_rgba8();
